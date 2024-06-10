@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2D Platformer Game</title>
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden; /* Hide scrollbars */
+        background-color: #87CEEB; /* Sky blue */
+    }
+    canvas {
+        display: block;
+        border: 1px solid #000;
+    }
+    #storyline {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        font-family: Arial, sans-serif;
+        font-size: 18px;
+        color: #000;
+    }
+    #shop {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-family: Arial, sans-serif;
+        font-size: 18px;
+        color: #000;
+    }
+    #quests {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        font-family: Arial, sans-serif;
+        font-size: 18px;
+        color: #000;
+    }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+<div id="storyline"></div>
+<div id="shop"></div>
+<div id="quests"></div>
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Define player properties
+    let player = {
+        x: 50,
+        y: canvas.height - 50,
+        width: 30,
+        height: 30,
+        speed: 5,
+        velX: 0,
+        velY: 0,
+        jumping: false,
+        grounded: false
+    };
+
+    // Define levels
+    const levels = [
+        { name: "Level 1", obstacles: [{ x: 100, y: 400, width: 100, height: 20 }, { x: 500, y: 300, width: 100, height: 20 }] },
+        { name: "Level 2", obstacles: [{ x: 200, y: 450, width: 100, height: 20 }, { x: 400, y: 350, width: 100, height: 20 }] }
+        // Add more levels as needed
+    ];
+
+    // Define quests
+    const quests = [
+        { name: "Defeat 5 enemies", reward: 100 },
+        { name: "Collect 50 coins", reward: 150 }
+        // Add more quests as needed
+    ];
+
+    // Define items in the shop
+    const shopItems = [
+        { name: "Health Potion", price: 50, effect: "heal" },
+        { name: "Double Jump", price: 100, effect: "doubleJump" }
+        // Add more items as needed
+    ];
+
+    // Define the current level index
+    let currentLevelIndex = 0;
+
+    // Define the current quest index
+    let currentQuestIndex = 0;
+
+    // Initialize UI elements
+    const storylineElement = document.getElementById('storyline');
+    const shopElement = document.getElementById('shop');
+    const questsElement = document.getElementById('quests');
+
+    // Load initial level
+    loadLevel(levels[currentLevelIndex]);
+
+    // Main game loop
+    function update() {
+        // Handle player input
+        handleInput();
+        // Apply physics and update player position
+        movePlayer();
+        // Draw game elements
+        drawPlayer();
+        drawObstacles(levels[currentLevelIndex].obstacles);
+        // Draw UI elements
+        drawStoryline();
+        drawShop();
+        drawQuests();
+        // Update game state
+        requestAnimationFrame(update);
+    }
+
+    function handleInput() {
+        // Left arrow or 'A' key
+        if ((keys[65] || keys[37]) && player.x > 0) {
+            player.velX = -player.speed;
+        }
+        // Right arrow or 'D' key
+        if ((keys[68] || keys[39]) && player.x < canvas.width - player.width) {
+            player.velX = player.speed;
+        }
+        // Up arrow or 'W' key (for future jumping implementation)
+        if (keys[87] || keys[38]) {
+            // Handle jumping (not implemented in this basic version)
+        }
+    }
+
+    function movePlayer() {
+        player.x += player.velX;
+        // Apply gravity (not implemented in this basic version)
+    }
+
+    function drawPlayer() {
+        ctx.fillStyle = 'red';
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+    }
+
+    function drawObstacles(obstacles) {
+        ctx.fillStyle = 'brown';
+        obstacles.forEach(obstacle => {
+            ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        });
+    }
+
+    function drawStoryline() {
+        storylineElement.innerHTML = `
+            <p>Welcome to the 2D Platformer Game!</p>
+            <p>Your mission is to explore levels, defeat enemies, and collect coins.</p>
+            <p>Use WASD keys to move.</p>
+        `;
+    }
+
+    function drawShop() {
+        shopElement.innerHTML = `
+            <p>Shop:</p>
+            <ul>
+                <li><button onclick="buyItem(0)">Health Potion - 50 coins</button></li>
+                <li><button onclick="buyItem(1)">Double Jump - 100 coins</button></li>
+            </ul>
+        `;
+    }
+
+    function drawQuests() {
+        questsElement.innerHTML = `
+            <p>Quests:</p>
+            <ul>
+                <li>${quests[currentQuestIndex].name}</li>
+            </ul>
+        `;
+    }
+
+    // Key states
+    const keys = [];
+
+    // Event listeners for key presses
+    document.addEventListener('keydown', e => {
+        keys[e.keyCode] = true;
+    });
+
+    document.addEventListener('keyup', e => {
+        keys[e.keyCode] = false;
+    });
+
+    // Function to progress to the next level
+    function nextLevel() {
+        currentLevelIndex++;
+        if (currentLevelIndex < levels.length) {
+            loadLevel(levels[currentLevelIndex]);
+        } else {
+            alert("Congratulations! You've completed all levels!");
+        }
+    }
+
+    // Function to complete a quest
+    function completeQuest() {
+        const quest = quests[currentQuestIndex];
+        player.coins += quest.reward;
+        player.completedQuests.push(quest);
+        currentQuestIndex++;
+        if (currentQuestIndex >= quests.length) {
+            currentQuestIndex = 0; // Reset quest index
+        }
+    }
+
+    // Function to buy an item from the shop
+    function buyItem(itemIndex) {
+        const item = shopItems[itemIndex];
+        if (player.coins >= item.price) {
+            player.coins -= item.price;
+            // Apply the effect of the item
+            if (item.effect === "heal") {
+                player.health += 50; // Example effect: Heal player by 50
+            } else if (item.effect === "doubleJump")
